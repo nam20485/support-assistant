@@ -26,6 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/SupportAssistant.Core/SupportAssistant.Core.csproj" />
+    <ProjectReference Include="../../src/SupportAssistant.AI/SupportAssistant.AI.csproj" />
+    <ProjectReference Include="../../src/SupportAssistant.KnowledgeBase/SupportAssistant.KnowledgeBase.csproj" />
   </ItemGroup>
 
   <ItemGroup>
