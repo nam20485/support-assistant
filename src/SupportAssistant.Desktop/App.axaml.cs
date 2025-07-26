@@ -6,6 +6,9 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using SupportAssistant.Desktop.ViewModels;
 using SupportAssistant.Desktop.Views;
+using SupportAssistant.Core.Interfaces;
+using SupportAssistant.AI.Services;
+using SupportAssistant.KnowledgeBase.Services;
 
 namespace SupportAssistant.Desktop;
 
@@ -41,10 +44,12 @@ public partial class App : Application
                     .WriteTo.File("logs/supportassistant-.txt", rollingInterval: RollingInterval.Day))
             .ConfigureServices((context, services) =>
             {
+                // Register Core Services
+                services.AddSingleton<IAIService, OnnxAIService>();
+                services.AddSingleton<IKnowledgeBaseService, SqliteKnowledgeBaseService>();
+                
                 // Register ViewModels
                 services.AddTransient<MainWindowViewModel>();
-                
-                // Add other services here
             });
     }
 }
