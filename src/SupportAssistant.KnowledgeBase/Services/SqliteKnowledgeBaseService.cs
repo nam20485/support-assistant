@@ -261,7 +261,7 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
     {
         // Simple relevance scoring based on keyword matches
         var queryWords = query.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var contentWords = content.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var contentWords = new HashSet<string>(content.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
         var matches = queryWords.Count(qw => contentWords.Any(cw => cw.Contains(qw)));
         return (float)matches / queryWords.Length;
