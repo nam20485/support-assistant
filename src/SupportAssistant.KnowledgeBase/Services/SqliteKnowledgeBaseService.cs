@@ -13,8 +13,8 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
 {
     private readonly ILogger<SqliteKnowledgeBaseService> _logger;
     private SqliteConnection? _connection;
-    private bool _isInitialized = false;
-    private bool _disposed = false;
+    private bool _isInitialized;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the SqliteKnowledgeBaseService
@@ -88,11 +88,11 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
                     length(content)
                 LIMIT @maxResults";
 
-            using var command = new SqliteCommand(sql, _connection);
+            await using var command = new SqliteCommand(sql, _connection);
             command.Parameters.AddWithValue("@query", $"%{query}%");
             command.Parameters.AddWithValue("@maxResults", maxResults);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -135,7 +135,7 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
                 INSERT INTO knowledge_chunks (title, content, metadata, created_at)
                 VALUES (@title, @content, @metadata, @createdAt)";
 
-            using var command = new SqliteCommand(sql, _connection);
+            await using var command = new SqliteCommand(sql, _connection);
             command.Parameters.AddWithValue("@title", title);
             command.Parameters.AddWithValue("@content", content);
             command.Parameters.AddWithValue("@metadata", metadataJson ?? (object)DBNull.Value);
@@ -168,7 +168,7 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
             CREATE INDEX IF NOT EXISTS idx_knowledge_title ON knowledge_chunks(title);
         ";
 
-        using var command = new SqliteCommand(sql, _connection);
+        await using var command = new SqliteCommand(sql, _connection);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
@@ -176,7 +176,7 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
     {
         // Check if we already have data
         var countSql = "SELECT COUNT(*) FROM knowledge_chunks";
-        using var countCommand = new SqliteCommand(countSql, _connection);
+        await using var countCommand = new SqliteCommand(countSql, _connection);
         var existingCount = (long?)await countCommand.ExecuteScalarAsync(cancellationToken) ?? 0;
 
         if (existingCount > 0)

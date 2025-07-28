@@ -20,7 +20,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string _userInput = string.Empty;
     
     [ObservableProperty]
-    private bool _isProcessing = false;
+    private bool _isProcessing;
     
     [ObservableProperty]
     private string _statusMessage = "Ready";
