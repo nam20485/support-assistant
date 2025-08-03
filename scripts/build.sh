@@ -23,10 +23,6 @@ dotnet build --configuration Release --no-restore
 echo "Running tests..."
 dotnet test --configuration Release --no-build --verbosity normal
 
-# Build desktop application specifically
-echo "Building desktop application..."
-dotnet build src/SupportAssistant.Desktop --configuration Release --no-restore
-
 echo "Build completed successfully!"
 echo ""
 echo "To run the application:"

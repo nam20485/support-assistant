@@ -128,7 +128,9 @@ public class SqliteKnowledgeBaseService : IKnowledgeBaseService, IDisposable
 
         try
         {
-            var title = ExtractTitleFromContent(content);
+            var title = metadata?.TryGetValue("title", out var titleObj) == true && titleObj is string metaTitle
+                ? metaTitle
+                : ExtractTitleFromContent(content);
             var metadataJson = metadata != null ? JsonSerializer.Serialize(metadata) : null;
 
             var sql = @"

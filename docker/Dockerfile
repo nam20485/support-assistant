@@ -2,14 +2,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
+# Copy project files first for better layer caching
 COPY *.sln ./
 COPY global.json ./
-COPY src/ ./src/
-COPY tests/ ./tests/
+COPY src/*/*.csproj ./src/
+COPY tests/*/*.csproj ./tests/
 
 # Restore dependencies
 RUN dotnet restore
+
+# Copy the rest of the source code
+COPY src/ ./src/
+COPY tests/ ./tests/
 
 # Build the solution
 RUN dotnet build --configuration Release --no-restore

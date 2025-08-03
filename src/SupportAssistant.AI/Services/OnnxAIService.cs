@@ -11,6 +11,7 @@ namespace SupportAssistant.AI.Services;
 /// </summary>
 public class OnnxAIService : IAIService, IDisposable
 {
+    private static readonly Random _random = new();
     private readonly ILogger<OnnxAIService> _logger;
     private InferenceSession? _session;
     private SessionOptions? _sessionOptions;
@@ -27,7 +28,7 @@ public class OnnxAIService : IAIService, IDisposable
     }
 
     /// <inheritdoc />
-    public bool IsReady => _isInitialized && _session != null;
+    public bool IsReady => _isInitialized;
 
     /// <inheritdoc />
     public Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -178,7 +179,7 @@ public class OnnxAIService : IAIService, IDisposable
             "Your technical question would normally be processed through my RAG (Retrieval-Augmented Generation) system to provide factual, well-sourced answers from trusted technical resources."
         };
 
-        var random = new Random();
+        var random = _random;
         var responseText = mockResponses[random.Next(mockResponses.Length)];
 
         return new AIResponse
