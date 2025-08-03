@@ -39,9 +39,14 @@ public partial class MainWindowViewModel : ObservableObject
             Content = "Hello! I'm your SupportAssistant. I can help you with technical issues and system troubleshooting. What can I help you with today?",
             Sender = MessageSender.Assistant
         });
+    }
 
-        // Initialize services
-        _ = InitializeServicesAsync();
+    /// <summary>
+    /// Initialize the services asynchronously. Call this method after the ViewModel is constructed.
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        await InitializeServicesAsync();
     }
 
     [RelayCommand]

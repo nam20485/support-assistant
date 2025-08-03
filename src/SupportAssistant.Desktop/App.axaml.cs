@@ -26,6 +26,10 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainViewModel = host.Services.GetRequiredService<MainWindowViewModel>();
+            
+            // Initialize services asynchronously
+            _ = mainViewModel.InitializeAsync();
+            
             desktop.MainWindow = new MainWindow
             {
                 DataContext = mainViewModel,
