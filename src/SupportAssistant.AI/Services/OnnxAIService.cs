@@ -1,5 +1,6 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using SupportAssistant.Core.Models;
 using SupportAssistant.Core.Interfaces;
 using System.Runtime.CompilerServices;
@@ -13,18 +14,28 @@ public class OnnxAIService : IAIService, IDisposable
 {
     private static readonly Random _random = new();
     private readonly ILogger<OnnxAIService> _logger;
+    private readonly IConfiguration? _configuration;
     private InferenceSession? _session;
     private SessionOptions? _sessionOptions;
     private bool _isInitialized = false;
     private bool _disposed = false;
+    private bool _useGpuAcceleration = true;
 
     /// <summary>
     /// Initializes a new instance of the OnnxAIService
     /// </summary>
     /// <param name="logger">Logger instance</param>
-    public OnnxAIService(ILogger<OnnxAIService> logger)
+    /// <param name="configuration">Configuration instance (optional)</param>
+    public OnnxAIService(ILogger<OnnxAIService> logger, IConfiguration? configuration = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration;
+
+        // Check configuration for GPU acceleration preference
+        if (_configuration != null)
+        {
+            _useGpuAcceleration = _configuration.GetSection("AI")["UseGpuAcceleration"] != "false";
+        }
     }
 
     /// <inheritdoc />
@@ -43,21 +54,27 @@ public class OnnxAIService : IAIService, IDisposable
         {
             _logger.LogInformation("Initializing ONNX AI Service...");
 
-            // Create session options with DirectML provider
+            // Create session options
             _sessionOptions = new SessionOptions();
-            
-            // Try to use DirectML provider for GPU acceleration
-            try
+
+            // Configure execution providers based on preferences and availability
+            if (_useGpuAcceleration)
             {
-                _sessionOptions.AppendExecutionProvider_DML(0);
-                _logger.LogInformation("DirectML execution provider enabled");
+                if (TryEnableDirectML())
+                {
+                    _logger.LogInformation("DirectML execution provider enabled successfully");
+                }
+                else
+                {
+                    _logger.LogInformation("DirectML not available, using CPU execution provider");
+                }
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogWarning(ex, "Failed to enable DirectML provider, falling back to CPU");
+                _logger.LogInformation("GPU acceleration disabled by configuration, using CPU execution provider");
             }
 
-            // Add CPU provider as fallback
+            // Always add CPU provider as fallback
             _sessionOptions.AppendExecutionProvider_CPU();
 
             // For now, we'll use a placeholder path - in a real implementation,
@@ -197,16 +214,61 @@ public class OnnxAIService : IAIService, IDisposable
 
     private string GetModelPath()
     {
-        // In a real implementation, this would return the path to the Phi-3-mini model
-        // For now, we'll check common locations
+        // Check configuration first
+        var configuredPath = _configuration?.GetSection("AI")["ModelPath"];
+        if (!string.IsNullOrEmpty(configuredPath) && File.Exists(configuredPath))
+        {
+            _logger.LogInformation("Using configured model path: {ModelPath}", configuredPath);
+            return configuredPath;
+        }
+
+        // Check common locations for Phi-3-mini model
         var possiblePaths = new[]
         {
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "models", "phi3-mini.onnx"),
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models", "phi3-mini.onnx"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SupportAssistant", "models", "phi3-mini.onnx"),
-            @"C:\AI\Models\phi3-mini.onnx"
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "huggingface", "hub", "phi3-mini.onnx"),
+            @"C:\AI\Models\phi3-mini.onnx",
+            @"C:\Models\phi3-mini.onnx"
         };
 
-        return possiblePaths.FirstOrDefault(File.Exists) ?? string.Empty;
+        var foundPath = possiblePaths.FirstOrDefault(File.Exists);
+        if (!string.IsNullOrEmpty(foundPath))
+        {
+            _logger.LogInformation("Found model at: {ModelPath}", foundPath);
+        }
+        else
+        {
+            _logger.LogWarning("Model not found in any of the expected locations. Checked paths: {Paths}",
+                string.Join(", ", possiblePaths));
+        }
+
+        return foundPath ?? string.Empty;
+    }
+
+    private bool TryEnableDirectML()
+    {
+        try
+        {
+            _sessionOptions?.AppendExecutionProvider_DML(0);
+            return true;
+        }
+        catch (EntryPointNotFoundException ex)
+        {
+            _logger.LogWarning("DirectML entry point not found. This may indicate an incompatible ONNX Runtime version or missing DirectML support. Error: {Error}", ex.Message);
+            return false;
+        }
+        catch (DllNotFoundException ex)
+        {
+            _logger.LogWarning("DirectML DLL not found. DirectML may not be installed or supported on this system. Error: {Error}", ex.Message);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to enable DirectML provider: {Error}", ex.Message);
+            return false;
+        }
     }
 
     /// <inheritdoc />

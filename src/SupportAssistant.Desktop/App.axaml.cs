@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -42,7 +43,11 @@ public partial class App : Application
     private static IHostBuilder CreateHostBuilder()
     {
         return Host.CreateDefaultBuilder()
-            .UseSerilog((context, configuration) => 
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            })
+            .UseSerilog((context, configuration) =>
                 configuration
                     .WriteTo.Console()
                     .WriteTo.File("logs/supportassistant-.txt", rollingInterval: RollingInterval.Day))
@@ -51,7 +56,7 @@ public partial class App : Application
                 // Register Core Services
                 services.AddSingleton<IAIService, OnnxAIService>();
                 services.AddSingleton<IKnowledgeBaseService, SqliteKnowledgeBaseService>();
-                
+
                 // Register ViewModels
                 services.AddTransient<MainWindowViewModel>();
             });
