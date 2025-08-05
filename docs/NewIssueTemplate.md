@@ -175,7 +175,7 @@ Detailed status available in `/docs/CurrentImplementationStatus.md`
 
 ## Dependencies
 
-- ✅ Microsoft Phi-3-mini ONNX model files (need to download/package)
+- [ ] Microsoft Phi-3-mini ONNX model files (need to download/package)
 - ✅ Sample technical documentation for knowledge base (existing)
 - ✅ Windows development environment with appropriate SDKs (existing)
 - ✅ Avalonia UI framework and ONNX Runtime (existing)
