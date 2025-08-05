@@ -25,7 +25,7 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "Ready";
 
-    public ObservableCollection<ChatMessage> Messages { get; } = new();
+    public ObservableCollection<ChatMessage> Messages { get; } = [];
 
     public MainWindowViewModel(IAIService aiService, IKnowledgeBaseService knowledgeBaseService, ILogger<MainWindowViewModel> logger)
     {
